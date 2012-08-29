@@ -1,5 +1,4 @@
-Welcome to  [ <a href="http://sysadmintalk.net/">SysAdminTalk.Net</a> ]  Git Repo
------
+# Welcome to  [ [SysAdminTalk.Net](http://sysadmintalk.net/) ]  Git Repo
 
 This git repository contains useful scripts pertaining to System Administrators. It can be Shell (e.g. Bash, Zsh, Ksh... etc.), Perl, Python... etc.
 
@@ -7,6 +6,13 @@ If you have something you want to contribute, please open a new thread in "Gener
 
 Thank you very much!
 
+## License
+
+Licensed under the [MIT license](http://en.wikipedia.org/wiki/MIT_License).
+
+## Credits
+
+Users of [SysAdminTalk.Net](http://sysadmintalk.net/).
 
 
 quad3datwork @ SysAdminTalk.Net
