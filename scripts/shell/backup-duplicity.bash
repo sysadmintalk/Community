@@ -51,7 +51,8 @@ BACKUP_PATH_server3="
 
 ##########
 ##########
-########## YOU DO NOT NEED TO MAKE ANY MODIFICATIONS BELOW THIS LINE!
+########## YOU DO NOT NEED TO MAKE ANY MODIFICATIONS BELOW THIS LINE!!!
+########## If you want to suggest ideas and/or have comments, please ask on SysAdminTalk.Net. Thank you.
 ##########
 ##########
 
