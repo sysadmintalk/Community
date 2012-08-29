@@ -14,6 +14,9 @@
 ##### (Variable $TMPDIR could possibly conflict with $TMPDIR variable from duplicity command. So we name ours $TMPDIR_minor.)
 #####
 #####
+##### SysAdminTalk.Net script and licensed under MIT license.
+#####
+#####
 #####
 
 BASENAME=`basename $0`
