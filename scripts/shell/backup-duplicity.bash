@@ -237,7 +237,6 @@ sshfs_mount () {
 ##### Function checks for private key availability.
 #####
 check_gpg_secret_key () {
-}
 	$GPG --list-secret-keys |grep $GNUPG_KEY >/dev/null 2>&1
 
 	if [ "$?" -ne "0" ]; then
