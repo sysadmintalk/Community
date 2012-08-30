@@ -23,6 +23,7 @@ BASENAME=`basename $0`
 DUPLICITY="/usr/bin/duplicity"
 DATE_TIME=`date '+%F_%T'`
 SSHFS_DIR="/mnt/sshfs"
+GPG=`which gpg`
 BACKUP_DIR="/backup"
 SSHFS_PORT="22"
 TMPDIR_minor="/tmp/.$BASENAME"
@@ -233,6 +234,23 @@ sshfs_mount () {
 
 
 #####
+##### Function checks for private key availability.
+#####
+check_gpg_secret_key () {
+}
+	$GPG --list-secret-keys |grep $GNUPG_KEY >/dev/null 2>&1
+
+	if [ "$?" -ne "0" ]; then
+		echo
+		echo "GnuPG secret key is not available for decrypting! Make sure desired private key with ID \"$GNUPG_KEY\" is in your keyring first!"
+		echo
+
+		exit 1
+	fi
+}
+
+
+#####
 ##### Function actually runs "$0 backup".
 #####
 mode_backup () {
@@ -322,6 +340,11 @@ mode_restore () {
 	local INPUT_ARCHIVE=""
 	local SEARCH_STRING=""
 	local DONE="1"
+
+	##########
+	## Run function to check and see if GnuPG private key is available.
+	##########
+	check_gpg_secret_key
 
 	##########
 	## Collect all available backup archives (Full and Incremental), assign it line number, awk all necessary fields, and output into respected $HOST text file.
@@ -491,6 +514,11 @@ mode_verify () {
 	local PATH_NO_ROOT=""
 	local VERIFY_ONE_ITEM=""
 	local PASSPHRASE=""
+
+	##########
+	## Run function to check and see if GnuPG private key is available.
+	##########
+	check_gpg_secret_key
 
 	echo
 	echo -e "\E[1mVERIFYING BACKUP ARCHIVE COULD TAKE A LONG TIME!!!\E[0m"
@@ -668,6 +696,9 @@ mode_listbackup () {
 
 /usr/bin/which sshfs > /dev/null 2>&1
 [ "$?" != "0" ] && echo "\"sshfs\" command cannot be fount in \$PATH. Please check and make sure \$PATH contains \"sshfs\" command." && exit 1
+
+/usr/bin/which gpg > /dev/null 2>&1
+[ "$?" != "0" ] && echo "\"gpg\" command cannot be fount in \$PATH. Please check and make sure \$PATH contains \"gpg\" command." && exit 1
 
 ##########
 ## Make sure $TMPDIR_minor(/log) is available for temporary processing and store. Purge temporary output files on every start run.
