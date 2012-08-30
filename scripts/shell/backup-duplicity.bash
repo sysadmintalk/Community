@@ -272,7 +272,7 @@ mode_backup () {
 		echo >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
 		echo >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
 
-		EMAIL_BODY+="<tr><td class=\"server\">$BACKUP_HOST_PATH</td><td class=\"spath\">$HOST</td><td class=\"dpath\">$HOSTNAME</td>"
+		EMAIL_BODY+="<tr><td class=\"server\">$PATH_LIST</td><td class=\"spath\">$HOST</td><td class=\"dpath\">$HOSTNAME</td>"
 
 		##### Backup job result ##### >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
 		$DUPLICITY --verbosity 8 --encrypt-key $GNUPG_KEY $PATH_LIST_BKUP_INC --exclude "**" $SSHFS_DIR/$HOST file://$BACKUP_DIR/$HOST >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt 2>> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
