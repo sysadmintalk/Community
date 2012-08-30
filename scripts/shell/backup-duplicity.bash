@@ -244,6 +244,8 @@ check_gpg_secret_key () {
 		echo "GnuPG secret key is not available for decrypting! Make sure desired private key with ID \"$GNUPG_KEY\" is in your keyring first!"
 		echo
 
+		rm -f $TMPDIR_minor/$BASENAME.lck
+
 		exit 1
 	fi
 }
