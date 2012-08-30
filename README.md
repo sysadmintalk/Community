@@ -8,7 +8,9 @@ Thank you very much!
 
 ## License
 
-All scripts licensed under the [MIT license](http://en.wikipedia.org/wiki/MIT_License).
+Various. Majority scripts are licensed under the [MIT license](http://en.wikipedia.org/wiki/MIT_License).
+
+Please check each script codes for license details.
 
 ## Credits
 
