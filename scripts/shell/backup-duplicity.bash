@@ -9,6 +9,7 @@
 ##### - Generate a GnuPG key pair
 ##### - Generate root SSH exchange key pair and have public key installed on remote server (root) for keyless login
 ##### - SSHFS package installed on server and make sure mounting ${BACKUP_HOSTS}:/ "read-only" (-o ro) works
+##### - mutt package installed on server for emailing
 #####
 ##### Only include what you want to back up in ${BACKUP_PATH}_$HOST lines.
 ##### (Variable $TMPDIR could possibly conflict with $TMPDIR variable from duplicity command. So we name ours $TMPDIR_minor.)
@@ -542,7 +543,7 @@ mode_verify () {
 		##########
 		## We are redirecting "read -p" from stderr to stdout because "-p prompt Display prompt on standard error, without a trailing newline, before attempting to read any input" (BASH man page).
 		##########
-		read -s -p "Please enter your GnuPG passphrase right now: " PASSPHRASE 2>&1
+		read -s -p "Please enter your GnuPG passphrase: " PASSPHRASE 2>&1
 		echo
 		read -s -p "Please enter your GnuPG passphrase again: " PASSPHRASE2 2>&1
 		echo
