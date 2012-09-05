@@ -29,6 +29,8 @@ BACKUP_DIR="/backup"
 SSHFS_PORT="22"
 TMPDIR_minor="/tmp/.$BASENAME"
 EMAIL_SUMFILE="$TMPDIR_minor/email_sumfile.txt"
+FULL_CYCLE="7D" # Suffix the number with either "D" (Days), "W" (Weeks), "M" (Months), or "Y" (Years). So if you want to retake FULL backup every 7 days - use "7D". Retake FULL backup every month - use "1M".
+FULL_BKUP_TO_KEEP="4" # Number of FULL backups (includes associated incrementals) to keep. If $FULL_CYCLE is set to "7D" and $FULL_BKUP_TO_KEEP is set to "4"... it means keep one month worth of backups (roughly 4 FULL and 24 incrementals backups).
 
 ##########
 ## For every single HOST in $BACKUP_HOSTS, there should be a line for it as BACKUP_PATH_$HOST="". Or else this script will fail.
@@ -135,12 +137,13 @@ help () {
 	echo -e "\E[1;33mThis backup script uses \"duplicity\" and requires at least one argument.\E[0m"
 	echo
 	echo "Usage:"
-	echo -e "   \E[1;34m$BASENAME\E[0m [\E[35mbackup\E[0m|\E[35mrestore\E[0m|\E[35mverify\E[0m|\E[35mlistbackup\E[0m]"
+	echo -e "   \E[1;34m$BASENAME\E[0m [\E[35mbackup\E[0m|\E[35mrestore\E[0m|\E[35mverify\E[0m|\E[35mcleanup\E[0m|\E[35mlistbackup\E[0m]"
 	echo
 	echo "	Options:"
 	echo -e "  	 	\E[35mbackup\E[0m - Automatic backup and no user intervention required."
 	echo -e "   		\E[35mrestore\E[0m - Interactive, only outputs restore commands and not running them. \E[31mGnuPG passphrase REQUIRED!\E[0m"
-	echo -e "   		\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. No user intervention required. \E[31mGnuPG passphrase REQUIRED!\E[0m"
+	echo -e "   		\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. \E[31mGnuPG passphrase REQUIRED!\E[0m"
+	echo -e "   		\E[35mcleanup\E[0m - Clean up and delete FULL backup archive older than number set for \$FULL_BKUP_TO_KEEP. \E[31mGnuPG passphrase REQUIRED!\E[0m"
 	echo -e "   		\E[35mlistbackup\E[0m - List backup archives."
 
 	echo
@@ -295,7 +298,7 @@ mode_backup () {
 		EMAIL_BODY+="<tr><td class=\"server\">$PATH_LIST</td><td class=\"spath\">$HOST</td><td class=\"dpath\">$HOSTNAME</td>"
 
 		##### Backup job result ##### >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
-		$DUPLICITY --verbosity 8 --encrypt-key $GNUPG_KEY $PATH_LIST_BKUP_INC --exclude "**" $SSHFS_DIR/$HOST file://$BACKUP_DIR/$HOST >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt 2>> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
+		$DUPLICITY --verbosity 8 --full-if-older-than $FULL_CYCLE --encrypt-key $GNUPG_KEY $PATH_LIST_BKUP_INC --exclude "**" $SSHFS_DIR/$HOST file://$BACKUP_DIR/$HOST >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt 2>> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
 
 		BACKUP_RTNVAL=$?
 		if [ "$BACKUP_RTNVAL" -ne "0" ]; then
@@ -426,6 +429,7 @@ mode_restore () {
 			echo
 			echo -e "\E[1;33mPlease let me know what specific string you are looking for?\E[0m"
 			read SEARCH_STRING
+			echo "This may take a while... please be patient."
 
 			echo
 			$DUPLICITY list-current-files --time $EPOCH_TIME file://$BACKUP_DIR/$INPUT_HOST > $TMPDIR_minor/restore-archive_dump_FULL-$INPUT_HOST.$DATE_TIME.out
@@ -513,9 +517,11 @@ mode_verify () {
 	local HOST=""
 	local ITEM=""
 	local ITEM_PATH=""
+	local LINE=""
 	local PATH_NO_ROOT=""
 	local VERIFY_ONE_ITEM=""
 	local PASSPHRASE=""
+	local PASSPHRASE2=""
 
 	##########
 	## Run function to check and see if GnuPG private key is available.
@@ -670,7 +676,54 @@ mode_verify () {
 		fi
 	done
 
-	PASSPHRASE=""
+	unset PASSPHRASE
+	unset PASSPHRASE2
+}
+
+
+#####
+##### Run cleanup.
+#####
+mode_cleanup () {
+	local HOST=""
+	local ITEM_PATH=""
+	local PASSPHRASE=""
+	local PASSPHRASE2=""
+
+	for HOST in $BACKUP_HOSTS; do
+		if [[ -z "$1" || $1 != "auto" ]]; then
+			if [ -z "$PASSPHRASE" ]; then
+				echo
+				echo -e "\E[35m!!! GnuPG passphrase REQUIRED! !!!\E[0m"
+
+				while true; do
+					echo
+					##########
+					## We are redirecting "read -p" from stderr to stdout because "-p prompt Display prompt on standard error, without a trailing newline, before attempting to read any input" (BASH man page).
+					##########
+					read -s -p "Please enter your GnuPG passphrase: " PASSPHRASE 2>&1
+					echo
+					read -s -p "Please enter your GnuPG passphrase again: " PASSPHRASE2 2>&1
+					echo
+
+					if [ "$PASSPHRASE" == "$PASSPHRASE2" ]; then
+						export PASSPHRASE
+
+						break
+					else
+						echo "Negative! Passphrases entered does not match! Try again!"
+					fi
+				done
+			fi
+
+			$DUPLICITY cleanup --force file://$BACKUP_DIR/$HOST
+		elif [ "$1" == "auto" ]; then
+			$DUPLICITY remove-all-but-n-full $FULL_BKUP_TO_KEEP --force file://$BACKUP_DIR/$HOST
+		fi
+	done
+
+	unset PASSPHRASE
+	unset PASSPHRASE2
 }
 
 
@@ -726,9 +779,10 @@ elif [ "$1" == "backup" ]; then
 
 				break
 			elif [ "`echo $INPUT |tr "[:upper:]" "[:lower:]"`" == "no" ]; then
-				echo "Not backing up!"
+				echo "Not running back up job!"
+				echo
+
 				rm -f $TMPDIR_minor/$BASENAME.lck
-		
 				exit 1
 			fi
 		done
@@ -745,6 +799,8 @@ elif [ "$1" == "backup" ]; then
 
 	/usr/bin/mutt -e 'set content_type="text/html"' -s "${EMAIL_SUBJECT}" -a $TMPDIR_minor/backup_result-*.$DATE_TIME.txt -- $ADMIN < $EMAIL_SUMFILE
 
+	mode_cleanup
+
 	rm -f $TMPDIR_minor/$BASENAME.lck
 elif [ "$1" == "restore" ]; then
 	lock_session
@@ -760,6 +816,14 @@ elif [ "$1" == "verify" ]; then
 	log_console
 
 	mode_verify
+
+	rm -f $TMPDIR_minor/$BASENAME.lck
+elif [ "$1" == "cleanup" ]; then
+	lock_session
+
+	log_console
+
+	mode_cleanup $2
 
 	rm -f $TMPDIR_minor/$BASENAME.lck
 elif [ "$1" == "listbackup" ]; then
