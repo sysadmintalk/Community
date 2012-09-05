@@ -715,8 +715,26 @@ if [ -z "$1" ]; then
 elif [ "$1" == "backup" ]; then
 	lock_session
 
+	if [ -z "$2" ]; then
+		while true; do
+			echo
+			echo "Are you sure you want to run backup job? \"yes\" or \"no\"."
+			read INPUT
 
-	mode_backup
+			if [ "`echo $INPUT |tr "[:upper:]" "[:lower:]"`" == "yes" ]; then
+				mode_backup
+
+				break
+			elif [ "`echo $INPUT |tr "[:upper:]" "[:lower:]"`" == "no" ]; then
+				echo "Not backing up!"
+				rm -f $TMPDIR_minor/$BASENAME.lck
+		
+				exit 1
+			fi
+		done
+	elif [ "$2" == "auto" ]; then
+			mode_backup
+	fi
 
 	EMAIL_SUBJECT="synchronize on [$HOSTNAME] (WebNX) for [`date "+%m/%d/%Y"`] "
 	if [ "$BACKUP_RTNVAL" -ne "0" ]; then
