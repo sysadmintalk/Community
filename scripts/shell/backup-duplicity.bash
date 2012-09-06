@@ -140,11 +140,11 @@ help () {
 	echo -e "   \E[1;34m$BASENAME\E[0m [\E[35mbackup\E[0m|\E[35mrestore\E[0m|\E[35mverify\E[0m|\E[35mcleanup\E[0m|\E[35mlistbackup\E[0m]"
 	echo
 	echo "	Options:"
-	echo -e "  	 	\E[35mbackup\E[0m - Automatic backup and no user intervention required."
-	echo -e "   		\E[35mrestore\E[0m - Interactive, only outputs restore commands and not running them. \E[31mGnuPG passphrase REQUIRED!\E[0m"
-	echo -e "   		\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. \E[31mGnuPG passphrase REQUIRED!\E[0m"
-	echo -e "   		\E[35mcleanup\E[0m - Clean up and delete FULL backup archive older than number set for \$FULL_BKUP_TO_KEEP. \E[31mGnuPG passphrase REQUIRED!\E[0m"
-	echo -e "   		\E[35mlistbackup\E[0m - List backup archives."
+	echo -e "			\E[35mbackup\E[0m - Automatic (pass \"auto\" as \$2) backup or semi-auto if run on CLI."
+	echo -e "			\E[35mrestore\E[0m - Interactive, only outputs restore commands and not running them. \E[31mGnuPG passphrase REQUIRED!\E[0m"
+	echo -e "			\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. \E[31mGnuPG passphrase REQUIRED!\E[0m"
+	echo -e "			\E[35mcleanup\E[0m - Automatic run if \"bacup\" (\$1) runs with \"auto\" (\$2) - ONLY delete backup set per \$FULL_BKUP_TO_KEEP and *NOT* running cleanup job. CLI run is interactive and runs both cleanup and delete backup set jobs per \$FULL_BKUP_TO_KEEP. \E[31mGnuPG passphrase REQUIRED for CLI!\E[0m"
+	echo -e "			\E[35mlistbackup\E[0m - List backup archives."
 
 	echo
 	echo
@@ -556,6 +556,7 @@ mode_verify () {
 
 		if [ "$PASSPHRASE" == "$PASSPHRASE2" ]; then
 			export PASSPHRASE
+			unset PASSPHRASE2
 
 			break
 		else
@@ -677,7 +678,6 @@ mode_verify () {
 	done
 
 	unset PASSPHRASE
-	unset PASSPHRASE2
 }
 
 
@@ -689,6 +689,8 @@ mode_cleanup () {
 	local ITEM_PATH=""
 	local PASSPHRASE=""
 	local PASSPHRASE2=""
+
+	cat /dev/null > $TMPDIR_minor/backup_cleanup_result-$HOST.$DATE_TIME.txt
 
 	for HOST in $BACKUP_HOSTS; do
 		if [[ -z "$1" || $1 != "auto" ]]; then
@@ -708,6 +710,7 @@ mode_cleanup () {
 
 					if [ "$PASSPHRASE" == "$PASSPHRASE2" ]; then
 						export PASSPHRASE
+						unset PASSPHRASE2
 
 						break
 					else
@@ -717,13 +720,13 @@ mode_cleanup () {
 			fi
 
 			$DUPLICITY cleanup --force file://$BACKUP_DIR/$HOST
-		elif [ "$1" == "auto" ]; then
 			$DUPLICITY remove-all-but-n-full $FULL_BKUP_TO_KEEP --force file://$BACKUP_DIR/$HOST
+		elif [ "$1" == "auto" ]; then
+			$DUPLICITY remove-all-but-n-full $FULL_BKUP_TO_KEEP --log-file $TMPDIR_minor/backup_cleanup_result-$HOST.$DATE_TIME.txt --force file://$BACKUP_DIR/$HOST
 		fi
 	done
 
 	unset PASSPHRASE
-	unset PASSPHRASE2
 }
 
 
@@ -788,6 +791,7 @@ elif [ "$1" == "backup" ]; then
 		done
 	elif [ "$2" == "auto" ]; then
 			mode_backup
+			mode_cleanup $2
 	fi
 
 	EMAIL_SUBJECT="synchronize on [$HOSTNAME] (WebNX) for [`date "+%m/%d/%Y"`] "
