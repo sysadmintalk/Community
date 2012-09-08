@@ -140,11 +140,11 @@ help () {
 	echo -e "   \E[1;34m$BASENAME\E[0m [\E[35mbackup\E[0m|\E[35mrestore\E[0m|\E[35mverify\E[0m|\E[35mcleanup\E[0m|\E[35mlistbackup\E[0m]"
 	echo
 	echo "	Options:"
-	echo -e "			\E[35mbackup\E[0m - Automatic (pass \"auto\" as \$2) backup or semi-auto if run on CLI."
-	echo -e "			\E[35mrestore\E[0m - Interactive, only outputs restore commands and not running them. \E[31mGnuPG passphrase REQUIRED!\E[0m"
-	echo -e "			\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. \E[31mGnuPG passphrase REQUIRED!\E[0m"
-	echo -e "			\E[35mcleanup\E[0m - Automatic run if \"bacup\" (\$1) runs with \"auto\" (\$2) - ONLY delete backup set per \$FULL_BKUP_TO_KEEP and *NOT* running cleanup job. CLI run is interactive and runs both cleanup and delete backup set jobs per \$FULL_BKUP_TO_KEEP. \E[31mGnuPG passphrase REQUIRED for CLI!\E[0m"
-	echo -e "			\E[35mlistbackup\E[0m - List backup archives."
+	echo -e "		\E[35mbackup\E[0m - Automatic (pass \"auto\" as \$2) backup or semi-auto if run on CLI."
+	echo -e "		\E[35mrestore\E[0m - Interactive, only outputs restore commands and not running them. \E[31mGnuPG passphrase REQUIRED!\E[0m"
+	echo -e "		\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. \E[31mGnuPG passphrase REQUIRED!\E[0m"
+	echo -e "		\E[35mcleanup\E[0m - Automatic run if \"bacup\" (\$1) runs with \"auto\" (\$2) - ONLY delete backup set per \$FULL_BKUP_TO_KEEP and *NOT* running cleanup job. CLI run is interactive and runs both cleanup and delete backup set jobs per \$FULL_BKUP_TO_KEEP. \E[31mGnuPG passphrase REQUIRED for CLI!\E[0m"
+	echo -e "		\E[35mlistbackup\E[0m - List backup archives."
 
 	echo
 	echo
@@ -693,7 +693,7 @@ mode_cleanup () {
 	cat /dev/null > $TMPDIR_minor/backup_cleanup_result-$HOST.$DATE_TIME.txt
 
 	for HOST in $BACKUP_HOSTS; do
-		if [[ -z "$1" || $1 != "auto" ]]; then
+		if [[ -z "$1" || "$1" != "auto" ]]; then
 			if [ -z "$PASSPHRASE" ]; then
 				echo
 				echo -e "\E[35m!!! GnuPG passphrase REQUIRED! !!!\E[0m"
@@ -771,7 +771,7 @@ if [ -z "$1" ]; then
 elif [ "$1" == "backup" ]; then
 	lock_session
 
-	if [ -z "$2" ]; then
+	if [[ -z "$2" || "$2" != "auto" ]]; then
 		while true; do
 			echo
 			echo "Are you sure you want to run backup job? \"yes\" or \"no\"."
@@ -779,6 +779,7 @@ elif [ "$1" == "backup" ]; then
 
 			if [ "`echo $INPUT |tr "[:upper:]" "[:lower:]"`" == "yes" ]; then
 				mode_backup
+				mode_cleanup auto
 
 				break
 			elif [ "`echo $INPUT |tr "[:upper:]" "[:lower:]"`" == "no" ]; then
@@ -802,8 +803,6 @@ elif [ "$1" == "backup" ]; then
 	fi
 
 	/usr/bin/mutt -e 'set content_type="text/html"' -s "${EMAIL_SUBJECT}" -a $TMPDIR_minor/backup_result-*.$DATE_TIME.txt -- $ADMIN < $EMAIL_SUMFILE
-
-	mode_cleanup
 
 	rm -f $TMPDIR_minor/$BASENAME.lck
 elif [ "$1" == "restore" ]; then
