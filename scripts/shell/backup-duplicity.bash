@@ -140,11 +140,11 @@ help () {
 	echo -e "   \E[1;34m$BASENAME\E[0m [\E[35mbackup\E[0m|\E[35mrestore\E[0m|\E[35mverify\E[0m|\E[35mcleanup\E[0m|\E[35mlistbackup\E[0m]"
 	echo
 	echo "	Options:"
-	echo -e "		\E[35mbackup\E[0m - Automatic (pass \"auto\" as \$2) backup or semi-auto if run on CLI."
-	echo -e "		\E[35mrestore\E[0m - Interactive, only outputs restore commands and not running them. \E[31mGnuPG passphrase REQUIRED!\E[0m"
-	echo -e "		\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. \E[31mGnuPG passphrase REQUIRED!\E[0m"
-	echo -e "		\E[35mcleanup\E[0m - Automatic run if \"bacup\" (\$1) runs with \"auto\" (\$2) - ONLY delete backup set per \$FULL_BKUP_TO_KEEP and *NOT* running cleanup job. CLI run is interactive and runs both cleanup and delete backup set jobs per \$FULL_BKUP_TO_KEEP. \E[31mGnuPG passphrase REQUIRED for CLI!\E[0m"
-	echo -e "		\E[35mlistbackup\E[0m - List backup archives."
+	echo -e "	\E[35mbackup\E[0m - Automatic (pass \"auto\" as \$2) backup or semi-auto if run on CLI."
+	echo -e "	\E[35mrestore\E[0m - Interactive, only outputs restore commands and not running them. \E[31mGnuPG passphrase REQUIRED!\E[0m"
+	echo -e "	\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. \E[31mGnuPG passphrase REQUIRED!\E[0m"
+	echo -e "	\E[35mcleanup\E[0m - Automatic run if \"bacup\" (\$1) runs with \"auto\" (\$2) - ONLY delete backup set per \$FULL_BKUP_TO_KEEP and *NOT* running cleanup job. CLI run is interactive and runs both cleanup and delete backup set jobs per \$FULL_BKUP_TO_KEEP. \E[31mGnuPG passphrase REQUIRED for CLI!\E[0m"
+	echo -e "	\E[35mlistbackup\E[0m - List backup archives."
 
 	echo
 	echo
@@ -262,6 +262,7 @@ mode_backup () {
 	local HOST=""
 	local ITEM=""
 	local START_TIME=""
+	local EMAIL_RESULT_FILESIZE=""
 	EMAIL_BODY=""
 	BACKUP_RTNVAL="0"
 
@@ -317,6 +318,21 @@ mode_backup () {
 		echo >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
 
 		echo "(END TIME: `date '+%F_%T'`)" >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+
+		EMAIL_RESULT_FILESIZE=`/usr/bin/du -sh $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt |awk '{print $1}' |grep 'M' |sed 's/[^0-9]*//g'`
+		if [ "$EMAIL_RESULT_FILESIZE" -ge "10" ]; then
+			mv $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt $TMPDIR_minor/FULLSIZE-backup_result-$HOST.$DATE_TIME.txt
+			head -500 $TMPDIR_minor/FULLSIZE-backup_result-$HOST.$DATE_TIME.txt > $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+
+			echo >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+			echo >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+			echo "***SNIP***" >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+			echo "***SNIP***" >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+			echo >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+			echo >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+
+			tail -500 $TMPDIR_minor/FULLSIZE-backup_result-$HOST.$DATE_TIME.txt >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
+		fi
 
 		/bin/fusermount -u $SSHFS_DIR/$HOST
 	done
@@ -690,9 +706,9 @@ mode_cleanup () {
 	local PASSPHRASE=""
 	local PASSPHRASE2=""
 
-	cat /dev/null > $TMPDIR_minor/backup_cleanup_result-$HOST.$DATE_TIME.txt
-
 	for HOST in $BACKUP_HOSTS; do
+		cat /dev/null > $TMPDIR_minor/backup_cleanup_result-$HOST.$DATE_TIME.txt
+		
 		if [[ -z "$1" || "$1" != "auto" ]]; then
 			if [ -z "$PASSPHRASE" ]; then
 				echo
