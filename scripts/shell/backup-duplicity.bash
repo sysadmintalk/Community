@@ -63,6 +63,9 @@ BACKUP_PATH_server3="
 ##########
 ##########
 
+RUNNING_OS=""
+RUNNING_USER=""
+
 EMAIL_HEADER="
 \n<html>
 \n<head>
@@ -764,6 +767,11 @@ mode_listbackup () {
 #####
 ##### MAIN
 #####
+
+RUNNING_OS=`uname -s`
+RUNNING_USER=`id -u`
+[[ "$RUNNING_OS" != "Linux" ]] && echo "You are not running Linux!" && exit 1
+[[ "$RUNNING_USER" -ne "0" ]] && echo "You are not as root!" && exit 1
 
 /usr/bin/which duplicity > /dev/null 2>&1
 [ "$?" != "0" ] && echo "\"duplicity\" command cannot be fount in \$PATH. Please check and make sure \$PATH contains \"duplicity\" command." && exit 1
