@@ -269,14 +269,14 @@ mode_backup () {
 	EMAIL_BODY=""
 	BACKUP_RTNVAL="0"
 
-	cat /dev/null > $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
-
 	START_TIME=`date`
 
 	echo -e $EMAIL_HEADER > $EMAIL_SUMFILE
 	echo -e "<table><thead class=\"header\"><th>Backup Source</th><th>Source Server</th><th>Destination Server</th><th>Status</th></thead><tbody>" >> $EMAIL_SUMFILE
 
 	for HOST in $BACKUP_HOSTS; do
+		cat /dev/null > $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
+		
 		process_vars $HOST
 
 		##########
