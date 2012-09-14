@@ -199,6 +199,7 @@ log_console () {
 	##########
 	## On restore and verify we'll log console outputs to stdout and stderr file.
 	##########
+	[ ! -d "$TMPDIR_minor/log" ] && mkdir -p $TMPDIR_minor/log
 	[ `ls -l $TMPDIR_minor/log/*log* 2>/dev/null |wc -l` -gt "21" ] && ls -lt $TMPDIR_minor/log/*log* |tail -1 |awk '{print $9}' |xargs rm -f
 	LOGFILE="$TMPDIR_minor/log/${0##*/}.$DATE_TIME.log"
 
@@ -275,6 +276,8 @@ mode_backup () {
 	echo -e "<table><thead class=\"header\"><th>Backup Source</th><th>Source Server</th><th>Destination Server</th><th>Status</th></thead><tbody>" >> $EMAIL_SUMFILE
 
 	for HOST in $BACKUP_HOSTS; do
+		[ `ls -l $TMPDIR_minor/backup_result-$HOST*txt 2>/dev/null |wc -l` -gt "61" ] && ls -lt $TMPDIR_minor/log/backup_result-$HOST*txt |tail -2 |awk '{print $9}' |xargs rm -f
+
 		cat /dev/null > $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
 		
 		process_vars $HOST
@@ -710,6 +713,8 @@ mode_cleanup () {
 	local PASSPHRASE2=""
 
 	for HOST in $BACKUP_HOSTS; do
+		[ `ls -l $TMPDIR_minor/backup_cleanup_result-$HOST*txt 2>/dev/null |wc -l` -gt "30" ] && ls -lt $TMPDIR_minor/log/backup_cleanup_result-$HOST*txt |tail -1 |awk '{print $9}' |xargs rm -f
+		
 		cat /dev/null > $TMPDIR_minor/backup_cleanup_result-$HOST.$DATE_TIME.txt
 		
 		if [[ -z "$1" || "$1" != "auto" ]]; then
@@ -781,12 +786,6 @@ RUNNING_USER=`id -u`
 
 /usr/bin/which gpg > /dev/null 2>&1
 [ "$?" != "0" ] && echo "\"gpg\" command cannot be fount in \$PATH. Please check and make sure \$PATH contains \"gpg\" command." && exit 1
-
-##########
-## Make sure $TMPDIR_minor(/log) is available for temporary processing and store. Purge temporary output files on every start run.
-##########
-[ ! -d "$TMPDIR_minor/log" ] && mkdir -p $TMPDIR_minor/log
-[ `ls -l $TMPDIR_minor/*out 2>/dev/null |wc -l` -gt "11" ] && ls -lt $TMPDIR_minor/log/*log* |tail -1 |awk '{print $9}' |xargs rm -f
 
 if [ -z "$1" ]; then
 	help
