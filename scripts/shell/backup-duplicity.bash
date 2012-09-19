@@ -821,11 +821,14 @@ elif [ "$1" == "backup" ]; then
 	EMAIL_SUBJECT="synchronize on [$HOSTNAME] (WebNX) for [`date "+%m/%d/%Y"`] "
 	if [ "$BACKUP_RTNVAL" -ne "0" ]; then
 		EMAIL_SUBJECT+="had FAILURES"
+
+		/usr/bin/mutt -e 'set content_type="text/html"' -s "${EMAIL_SUBJECT}" -a $TMPDIR_minor/backup_result-*.$DATE_TIME.txt $TMPDIR_minor/backup_result-*.$DATE_TIME.err -- $ADMIN < $EMAIL_SUMFILE
 	else
 		EMAIL_SUBJECT+="was successful"
+
+		/usr/bin/mutt -e 'set content_type="text/html"' -s "${EMAIL_SUBJECT}" -a $TMPDIR_minor/backup_result-*.$DATE_TIME.txt -- $ADMIN < $EMAIL_SUMFILE
 	fi
 
-	/usr/bin/mutt -e 'set content_type="text/html"' -s "${EMAIL_SUBJECT}" -a $TMPDIR_minor/backup_result-*.$DATE_TIME.txt -- $ADMIN < $EMAIL_SUMFILE
 
 	rm -f $TMPDIR_minor/$BASENAME.lck
 elif [ "$1" == "restore" ]; then
