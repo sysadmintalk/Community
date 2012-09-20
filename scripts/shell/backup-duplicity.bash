@@ -159,12 +159,18 @@ help () {
 #####
 lock_session () {
 	if [ -f "$TMPDIR_minor/$BASENAME.lck" ]; then
-		echo
-		echo "Lock file in place! Mutliple instance of this script run now allowed!"
-		echo "($TMPDIR_minor/$BASENAME.lck)"
-		echo
-		echo "Lock file may also be in place from abnormal abort. Please check."
-		echo
+		echo > $TMPDIR_minor/$BASENAME.lck.tmp
+		echo "Lock file in place! Mutliple instance of this script run now allowed!" >> $TMPDIR_minor/$BASENAME.lck.tmp
+		echo "($TMPDIR_minor/$BASENAME.lck)" >> $TMPDIR_minor/$BASENAME.lck.tmp
+		echo >> $TMPDIR_minor/$BASENAME.lck.tmp
+		echo "Lock file may also be in place from abnormal abort. Please check." >> $TMPDIR_minor/$BASENAME.lck.tmp
+		echo >> $TMPDIR_minor/$BASENAME.lck.tmp
+
+		cat $TMPDIR_minor/$BASENAME.lck.tmp
+
+		if [ "$2" == "auto" ]; then
+			/usr/bin/mutt -e 'set content_type="text/html"' -s "synchronize on [$HOSTNAME] (WebNX) for [`date "+%m/%d/%Y"`] had FAILURES" -- $ADMIN < $TMPDIR_minor/$BASENAME.lck.tmp
+		fi
 
 		exit 1
 	elif [ ! -f "$TMPDIR_minor/$BASENAME.lck" ]; then
