@@ -140,7 +140,7 @@ help () {
 	echo -e "\E[1;33mThis backup script uses \"duplicity\" and requires at least one argument.\E[0m"
 	echo
 	echo "Usage:"
-	echo -e "   \E[1;34m$BASENAME\E[0m [\E[35mbackup\E[0m|\E[35mrestore\E[0m|\E[35mverify\E[0m|\E[35mcleanup\E[0m|\E[35mlistbackup\E[0m]"
+	echo -e "   \E[1;34m$BASENAME\E[0m [\E[35mbackup\E[0m|\E[35mrestore\E[0m|\E[35mverify\E[0m|\E[35mcleanup\E[0m|\E[35mlistbackup\E[0m]|\E[35mchangebackupdir\E[0m]"
 	echo
 	echo "	Options:"
 	echo -e "	\E[35mbackup\E[0m - Automatic (pass \"auto\" as \$2) backup or semi-auto if run on CLI."
@@ -148,6 +148,7 @@ help () {
 	echo -e "	\E[35mverify\E[0m - Automatic verification checks between latest backup archive and hosts. \E[31mGnuPG passphrase REQUIRED!\E[0m"
 	echo -e "	\E[35mcleanup\E[0m - Automatic run if \"bacup\" (\$1) runs with \"auto\" (\$2) - ONLY delete backup set per \$FULL_BKUP_TO_KEEP and *NOT* running cleanup job. CLI run is interactive and runs both cleanup and delete backup set jobs per \$FULL_BKUP_TO_KEEP. \E[31mGnuPG passphrase REQUIRED for CLI!\E[0m"
 	echo -e "	\E[35mlistbackup\E[0m - List backup archives."
+	echo -e "	\E[35mchangebackupdir\E[0m - Interactive, change backup data archive folder."
 
 	echo
 	echo
@@ -774,6 +775,68 @@ mode_listbackup () {
 }
 
 
+#####
+##### Change backup data archive.
+#####
+change_bkup_dir () {
+	local OLD_ARCHIVE_MD5SUM=""
+	local NEW_ARCHIVE_MD5SUM=""
+	local NEW_BACKUP_DIR=""
+	local NEW_BACKUP_DIR_CONFIRM=""
+
+	while true; do
+		echo
+		echo "We have $BACKUP_DIR right now as the backup data archive directory. Please supply a new directory where backups would go."
+		echo "e.g. \"/mnt/drobo/backups_duplicity\" (without trailing \"/\")"
+		read NEW_BACKUP_DIR
+		echo "Please enter again to verify."
+		read NEW_BACKUP_DIR_CONFIRM
+
+		if [ "$NEW_BACKUP_DIR" != "$NEW_BACKUP_DIR_CONFIRM" ]; then
+			echo
+			echo "New backup data archive entries doesn not match. Please try again!"
+		else
+			break
+		fi
+	done
+
+	for HOST in $BACKUP_HOSTS; do
+		echo "Running preliminary checks..."
+
+		##########
+		## Checking existing backup archive folder exists first.
+		##########
+		ls -d $BACKUP_DIR/$HOST > /dev/null 2>&1
+		[[ "$?" -ne "0" ]] && echo "$BACKUP_DIR/$HOST does not exist! Exiting!" && exit 1
+
+		##########
+		## Checking existing backup archive metadata folder exists first.
+		##########
+		OLD_ARCHIVE_MD5SUM="`echo -n file://$BACKUP_DIR/$HOST | md5sum |awk '{print $1}'`"
+		[[ ! -d "`ls -d /root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM`" ]] && echo "Metadata directory \"/root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM\" does not exists! Exiting!" && exit 1
+
+		echo "Done checking!"
+
+		##########
+		## Creating new backup data archive and rsync from old to new.
+		##########
+		mkdir -p $NEW_BACKUP_DIR/$HOST
+		/usr/bin/rsync -az $BACKUP_DIR/$HOST $NEW_BACKUP_DIR/$HOST
+
+		##########
+		## Creating new backup metadata archive and rsync from old to new.
+		##########
+		NEW_ARCHIVE_MD5SUM="`echo -n file://$NEW_BACKUP_DIR/$HOST | md5sum |awk '{print $1}'`"
+		mkdir -p /root/.cache/duplicity/$NEW_ARCHIVE_MD5SUM
+		/usr/bin/rsync -az /root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM /root/.cache/duplicity/$NEW_ARCHIVE_MD5SUM
+	done
+
+#	sed -i "s/^BACKUP_DIR=\".*$/BACKUP_DIR=\"$NEW_BACKUP_DIR\"/" $0
+
+	echo "You now want to edit this script file and modify \$BACKUP_DIR variable to reflect new path."
+}
+
+
 
 #####
 ##### MAIN
@@ -865,6 +928,8 @@ elif [ "$1" == "listbackup" ]; then
 	log_console
 
 	mode_listbackup
+elif [ "$1" == "changebackupdir" ]; then
+	change_bkup_dir
 else
 	echo
 	echo "I did not understand your argument \"$1\"."
