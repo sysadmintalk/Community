@@ -167,10 +167,10 @@ lock_session () {
 		echo "Lock file may also be in place from abnormal abort. Please check." >> $TMPDIR_minor/$BASENAME.lck.tmp
 		echo >> $TMPDIR_minor/$BASENAME.lck.tmp
 
-		cat $TMPDIR_minor/$BASENAME.lck.tmp
-
-		if [ "$2" == "auto" ]; then
+		if [ "$1" == "auto" ]; then
 			/usr/bin/mutt -e 'set content_type="text/html"' -s "synchronize on [$HOSTNAME] (WebNX) for [`date "+%m/%d/%Y"`] had FAILURES" -- $ADMIN < $TMPDIR_minor/$BASENAME.lck.tmp
+		else
+			cat $TMPDIR_minor/$BASENAME.lck.tmp
 		fi
 
 		exit 1
@@ -816,6 +816,7 @@ change_bkup_dir () {
 		[[ ! -d "`ls -d /root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM`" ]] && echo "Metadata directory \"/root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM\" does not exists! Exiting!" && exit 1
 
 		echo "Done checking!"
+		sleep 2
 
 		##########
 		## Creating new backup data archive and rsync from old to new.
@@ -861,7 +862,7 @@ if [ -z "$1" ]; then
 
 	exit 1
 elif [ "$1" == "backup" ]; then
-	lock_session
+	lock_session $2
 
 	if [[ -z "$2" || "$2" != "auto" ]]; then
 		while true; do
