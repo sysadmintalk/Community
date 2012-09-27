@@ -333,7 +333,7 @@ mode_backup () {
 		echo "(END TIME: `date '+%F_%T'`)" >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
 
 		EMAIL_RESULT_FILESIZE=`/usr/bin/du -sh $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt |awk '{print $1}' |grep 'M' |sed 's/[^0-9]*//g'`
-		if [ "$EMAIL_RESULT_FILESIZE" -ge "10" ]; then
+		if [[ ! -z "$EMAIL_RESULT_FILESIZE" && "$EMAIL_RESULT_FILESIZE" -ge "10" ]]; then
 			mv $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt $TMPDIR_minor/FULLSIZE-backup_result-$HOST.$DATE_TIME.txt
 			head -500 $TMPDIR_minor/FULLSIZE-backup_result-$HOST.$DATE_TIME.txt > $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
 
