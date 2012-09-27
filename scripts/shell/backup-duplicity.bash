@@ -173,6 +173,8 @@ lock_session () {
 			cat $TMPDIR_minor/$BASENAME.lck.tmp
 		fi
 
+		rm -f $TMPDIR_minor/$BASENAME.lck.tmp 2>/dev/null
+
 		exit 1
 	elif [ ! -f "$TMPDIR_minor/$BASENAME.lck" ]; then
 		touch $TMPDIR_minor/$BASENAME.lck
