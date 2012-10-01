@@ -168,7 +168,7 @@ lock_session () {
 		echo >> $TMPDIR_minor/$BASENAME.lck.tmp
 
 		if [ "$1" == "auto" ]; then
-			/usr/bin/mutt -e 'set content_type="text/html"' -s "synchronize on [$HOSTNAME] (WebNX) for [`date "+%m/%d/%Y"`] had FAILURES" -- $ADMIN < $TMPDIR_minor/$BASENAME.lck.tmp
+			/usr/bin/mutt -e 'set content_type="text/html"' -s "synchronize on [$HOSTNAME] for [`date "+%m/%d/%Y"`] had FAILURES" -- $ADMIN < $TMPDIR_minor/$BASENAME.lck.tmp
 		else
 			cat $TMPDIR_minor/$BASENAME.lck.tmp
 		fi
@@ -890,7 +890,7 @@ elif [ "$1" == "backup" ]; then
 			mode_cleanup $2
 	fi
 
-	EMAIL_SUBJECT="synchronize on [$HOSTNAME] (WebNX) for [`date "+%m/%d/%Y"`] "
+	EMAIL_SUBJECT="synchronize on [$HOSTNAME] for [`date "+%m/%d/%Y"`] "
 	if [ "$BACKUP_RTNVAL" -ne "0" ]; then
 		EMAIL_SUBJECT+="had FAILURES"
 
