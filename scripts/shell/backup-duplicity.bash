@@ -31,6 +31,7 @@ TMPDIR_minor="/tmp/.$BASENAME"
 EMAIL_SUMFILE="$TMPDIR_minor/email_sumfile.txt"
 FULL_CYCLE="7D" # Suffix the number with either "D" (Days), "W" (Weeks), "M" (Months), or "Y" (Years). So if you want to retake FULL backup every 7 days - use "7D". Retake FULL backup every month - use "1M".
 FULL_BKUP_TO_KEEP="4" # Number of FULL backups (includes associated incrementals) to keep. If $FULL_CYCLE is set to "7D" and $FULL_BKUP_TO_KEEP is set to "4"... it means keep one month worth of backups (roughly 4 FULL and 24 incrementals backups).
+BACKUP_DATA_FILE_SIZE="100" # Backup archive file size in MB. Default is 25MB. *DO NOT* leave this variable blank, assign a number no less than "25".
 
 ##########
 ## For every single HOST in $BACKUP_HOSTS, there should be a line for it as BACKUP_PATH_$HOST="". Or else this script will fail.
@@ -314,7 +315,7 @@ mode_backup () {
 		EMAIL_BODY+="<tr><td class=\"server\">$PATH_LIST</td><td class=\"spath\">$HOST</td><td class=\"dpath\">$HOSTNAME</td>"
 
 		##### Backup job result ##### >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
-		$DUPLICITY --verbosity 8 --full-if-older-than $FULL_CYCLE --encrypt-key $GNUPG_KEY $PATH_LIST_BKUP_INC --exclude "**" $SSHFS_DIR/$HOST file://$BACKUP_DIR/$HOST >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt 2>> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
+		$DUPLICITY --verbosity 8 --full-if-older-than $FULL_CYCLE --volsize $BACKUP_DATA_FILE_SIZE --encrypt-key $GNUPG_KEY $PATH_LIST_BKUP_INC --exclude "**" $SSHFS_DIR/$HOST file://$BACKUP_DIR/$HOST >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt 2>> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
 
 		BACKUP_RTNVAL=$?
 		if [ "$BACKUP_RTNVAL" -ne "0" ]; then
