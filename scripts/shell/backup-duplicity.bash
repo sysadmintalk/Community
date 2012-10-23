@@ -162,7 +162,7 @@ help () {
 lock_session () {
 	if [ -f "$TMPDIR_minor/$BASENAME.lck" ]; then
 		echo > $TMPDIR_minor/$BASENAME.lck.tmp
-		echo "Lock file in place! Mutliple instance of this script run now allowed!" >> $TMPDIR_minor/$BASENAME.lck.tmp
+		echo "Lock file in place! Mutliple instance of this script run not allowed!" >> $TMPDIR_minor/$BASENAME.lck.tmp
 		echo "($TMPDIR_minor/$BASENAME.lck)" >> $TMPDIR_minor/$BASENAME.lck.tmp
 		echo >> $TMPDIR_minor/$BASENAME.lck.tmp
 		echo "Lock file may also be in place from abnormal abort. Please check." >> $TMPDIR_minor/$BASENAME.lck.tmp
@@ -819,23 +819,24 @@ change_bkup_dir () {
 		[[ ! -d "`ls -d /root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM`" ]] && echo "Metadata directory \"/root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM\" does not exists! Exiting!" && exit 1
 
 		echo "Done checking!"
+		echo
 		sleep 2
 
 		##########
 		## Creating new backup data archive and rsync from old to new.
 		##########
 		mkdir -p $NEW_BACKUP_DIR/$HOST
-		/usr/bin/rsync -az $BACKUP_DIR/$HOST $NEW_BACKUP_DIR/$HOST
+		/usr/bin/rsync -az $BACKUP_DIR/$HOST/ $NEW_BACKUP_DIR/$HOST
+		# The "/" after $BACKUP_DIR/$HOST is very important as you want to sync just the files from within and not the folder
 
 		##########
 		## Creating new backup metadata archive and rsync from old to new.
 		##########
 		NEW_ARCHIVE_MD5SUM="`echo -n file://$NEW_BACKUP_DIR/$HOST | md5sum |awk '{print $1}'`"
 		mkdir -p /root/.cache/duplicity/$NEW_ARCHIVE_MD5SUM
-		/usr/bin/rsync -az /root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM /root/.cache/duplicity/$NEW_ARCHIVE_MD5SUM
+		/usr/bin/rsync -az /root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM/ /root/.cache/duplicity/$NEW_ARCHIVE_MD5SUM
+		# The "/" after $OLD_ARCHIVE_MD5SUM is very important as you want to sync just the files from within and not the folder
 	done
-
-#	sed -i "s/^BACKUP_DIR=\".*$/BACKUP_DIR=\"$NEW_BACKUP_DIR\"/" $0
 
 	echo "You now want to edit this script file and modify \$BACKUP_DIR variable to reflect new path."
 }
