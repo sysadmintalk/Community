@@ -791,6 +791,7 @@ change_bkup_dir () {
 		echo
 		echo "We have $BACKUP_DIR right now as the backup data archive directory. Please supply a new directory where backups would go."
 		echo "e.g. \"/mnt/drobo/backups_duplicity\" (without trailing \"/\")"
+		echo
 		read NEW_BACKUP_DIR
 		echo "Please enter again to verify."
 		read NEW_BACKUP_DIR_CONFIRM
@@ -804,7 +805,7 @@ change_bkup_dir () {
 	done
 
 	for HOST in $BACKUP_HOSTS; do
-		echo "Running preliminary checks..."
+		echo "Running preliminary checks for \"$HOST\"..."
 
 		##########
 		## Checking existing backup archive folder exists first.
@@ -825,17 +826,21 @@ change_bkup_dir () {
 		##########
 		## Creating new backup data archive and rsync from old to new.
 		##########
+		echo "Syncing files from $BACKUP_DIR/$HOST to $NEW_BACKUP_DIR/$HOST..."
 		mkdir -p $NEW_BACKUP_DIR/$HOST
 		/usr/bin/rsync -az $BACKUP_DIR/$HOST/ $NEW_BACKUP_DIR/$HOST
 		# The "/" after $BACKUP_DIR/$HOST is very important as you want to sync just the files from within and not the folder
+		echo
 
 		##########
 		## Creating new backup metadata archive and rsync from old to new.
 		##########
+		echo "Syncing files from old Duplicity metadata archive (/root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM) to new archive (/root/.cache/duplicity/$NEW_ARCHIVE_MD5SUM)..."
 		NEW_ARCHIVE_MD5SUM="`echo -n file://$NEW_BACKUP_DIR/$HOST | md5sum |awk '{print $1}'`"
 		mkdir -p /root/.cache/duplicity/$NEW_ARCHIVE_MD5SUM
 		/usr/bin/rsync -az /root/.cache/duplicity/$OLD_ARCHIVE_MD5SUM/ /root/.cache/duplicity/$NEW_ARCHIVE_MD5SUM
 		# The "/" after $OLD_ARCHIVE_MD5SUM is very important as you want to sync just the files from within and not the folder
+		echo
 	done
 
 	echo "You now want to edit this script file and modify \$BACKUP_DIR variable to reflect new path."
@@ -875,6 +880,8 @@ elif [ "$1" == "backup" ]; then
 			read INPUT
 
 			if [ "`echo $INPUT |tr "[:upper:]" "[:lower:]"`" == "yes" ]; then
+				log_console
+
 				mode_backup
 				mode_cleanup auto
 
@@ -888,6 +895,8 @@ elif [ "$1" == "backup" ]; then
 			fi
 		done
 	elif [ "$2" == "auto" ]; then
+			log_console
+			
 			mode_backup
 			mode_cleanup $2
 	fi
