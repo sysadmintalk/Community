@@ -315,7 +315,7 @@ mode_backup () {
 		EMAIL_BODY+="<tr><td class=\"server\">$PATH_LIST</td><td class=\"spath\">$HOST</td><td class=\"dpath\">$HOSTNAME</td>"
 
 		##### Backup job result ##### >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt
-		$DUPLICITY --verbosity 8 --full-if-older-than $FULL_CYCLE --volsize $BACKUP_DATA_FILE_SIZE --encrypt-key $GNUPG_KEY $PATH_LIST_BKUP_INC --exclude "**" $SSHFS_DIR/$HOST file://$BACKUP_DIR/$HOST >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt 2>> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
+		$DUPLICITY --verbosity 8 --asynchronous-upload --full-if-older-than $FULL_CYCLE --volsize $BACKUP_DATA_FILE_SIZE --encrypt-key $GNUPG_KEY $PATH_LIST_BKUP_INC --exclude "**" $SSHFS_DIR/$HOST file://$BACKUP_DIR/$HOST >> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.txt 2>> $TMPDIR_minor/backup_result-$HOST.$DATE_TIME.err
 
 		BACKUP_RTNVAL=$?
 		if [ "$BACKUP_RTNVAL" -ne "0" ]; then
